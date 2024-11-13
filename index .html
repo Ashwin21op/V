@@ -1,0 +1,229 @@
+<meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shooting Game (Computer & Mobile)</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="game">
+    <div id="player"></div>
+    <div id="score">Score: 0</div>
+    <!-- On-screen controls (visible on mobile only) -->
+    <div id="controls">
+      <button id="left">←</button>
+      <button id="right">→</button>
+      <button id="shoot">Shoot</button>
+    </div>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html><style>* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-color: #333;
+}
+
+#game {
+  position: relative;
+  width: 100vw;
+  max-width: 400px;
+  height: 80vh;
+  background-color: #000;
+  overflow: hidden;
+  border: 2px solid #fff;
+}
+
+#player {
+  position: absolute;
+  bottom: 80px;
+  left: calc(50% - 20px);
+  width: 40px;
+  height: 40px;
+  background-color: #4CAF50;
+}
+
+.bullet {
+  position: absolute;
+  width: 5px;
+  height: 15px;
+  background-color: #f00;
+}
+
+.enemy {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  background-color: #f39c12;
+}
+
+#score {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  color: #fff;
+  font-size: 20px;
+}
+
+/* On-screen controls */
+#controls {
+  position: absolute;
+  bottom: 10px;
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: space-around;
+  display: none; /* Hidden on desktops by default */
+}
+
+#controls button {
+  width: 30%;
+  padding: 10px;
+  font-size: 18px;
+  background-color: #555;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+#controls button:active {
+  background-color: #777;
+}
+
+/* Show controls on mobile screens */
+@media (max-width: 600px) {
+  #controls {
+    display: flex;
+  }
+}</style><script>const game = document.getElementById("game");
+const player = document.getElementById("player");
+const scoreDisplay = document.getElementById("score");
+
+let score = 0;
+let playerSpeed = 10;
+let bulletSpeed = 5;
+let enemySpeed = 3;
+let bullets = [];
+let enemies = [];
+
+// Movement Controls
+function moveLeft() {
+  let playerLeft = parseInt(window.getComputedStyle(player).getPropertyValue("left"));
+  if (playerLeft > 0) {
+    player.style.left = playerLeft - playerSpeed + "px";
+  }
+}
+
+function moveRight() {
+  let playerLeft = parseInt(window.getComputedStyle(player).getPropertyValue("left"));
+  if (playerLeft < game.clientWidth - player.clientWidth) {
+    player.style.left = playerLeft + playerSpeed + "px";
+  }
+}
+
+// Shooting bullets
+function shootBullet() {
+  const bullet = document.createElement("div");
+  bullet.classList.add("bullet");
+  bullet.style.left = player.offsetLeft + player.clientWidth / 2 - 2.5 + "px";
+  bullet.style.bottom = player.clientHeight + "px";
+  game.appendChild(bullet);
+  bullets.push(bullet);
+}
+
+// Move bullets
+function moveBullets() {
+  bullets.forEach((bullet, index) => {
+    let bulletBottom = parseInt(bullet.style.bottom);
+    bullet.style.bottom = bulletBottom + bulletSpeed + "px";
+
+    if (bulletBottom > game.clientHeight) {
+      bullet.remove();
+      bullets.splice(index, 1);
+    }
+  });
+}
+
+// Spawn an enemy
+function spawnEnemy() {
+  const enemy = document.createElement("div");
+  enemy.classList.add("enemy");
+  enemy.style.left = Math.floor(Math.random() * (game.clientWidth - 40)) + "px";
+  enemy.style.top = "0px";
+  game.appendChild(enemy);
+  enemies.push(enemy);
+}
+
+// Move enemies
+function moveEnemies() {
+  enemies.forEach((enemy, index) => {
+    let enemyTop = parseInt(enemy.style.top);
+    enemy.style.top = enemyTop + enemySpeed + "px";
+
+    if (enemyTop > game.clientHeight) {
+      enemy.remove();
+      enemies.splice(index, 1);
+    }
+  });
+}
+
+// Check for collisions
+function checkCollisions() {
+  bullets.forEach((bullet, bulletIndex) => {
+    enemies.forEach((enemy, enemyIndex) => {
+      const bulletRect = bullet.getBoundingClientRect();
+      const enemyRect = enemy.getBoundingClientRect();
+
+      if (
+        bulletRect.left < enemyRect.left + enemyRect.width &&
+        bulletRect.left + bulletRect.width > enemyRect.left &&
+        bulletRect.top < enemyRect.top + enemyRect.height &&
+        bulletRect.top + bulletRect.height > enemyRect.top
+      ) {
+        // Bullet hits the enemy
+        bullet.remove();
+        enemy.remove();
+        bullets.splice(bulletIndex, 1);
+        enemies.splice(enemyIndex, 1);
+
+        // Update score
+        score++;
+        scoreDisplay.textContent = "Score: " + score;
+      }
+    });
+  });
+}
+
+// Game loop
+function gameLoop() {
+  moveBullets();
+  moveEnemies();
+  checkCollisions();
+  requestAnimationFrame(gameLoop);
+}
+
+// Event listeners for keyboard controls (for computers)
+document.addEventListener("keydown", (e) => {
+  if (e.key === "ArrowLeft") moveLeft();
+  if (e.key === "ArrowRight") moveRight();
+  if (e.key === " ") shootBullet();
+});
+
+// Button event listeners (for mobile)
+document.getElementById("left").addEventListener("click", moveLeft);
+document.getElementById("right").addEventListener("click", moveRight);
+document.getElementById("shoot").addEventListener("click", shootBullet);
+
+// Start the game
+setInterval(spawnEnemy, 1000);
+gameLoop();</script>
